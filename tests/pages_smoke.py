@@ -31,20 +31,35 @@ try:
         assert page.locator('.module').count() == 16
         page.locator('.module').first.click()
         page.locator('#tasks input').first.check()
+        page.locator('#moduleNotes').fill('Моя нотатка <script> — українською\nДругий рядок')
         page.reload()
         assert page.locator('#progressText').inner_text() == '1 із 64 кроків'
+        page.locator('.module').first.click()
+        assert page.locator('#moduleNotes').input_value() == 'Моя нотатка <script> — українською\nДругий рядок'
+        page.locator('#lessonDialog .close').click()
         page.locator('#backupNav').click()
         with page.expect_download() as event:
             page.locator('#exportButton').click()
         backup = json.loads(Path(event.value.path()).read_text())
         assert backup['completed'] == [0] and backup['version'] == 1
+        assert backup['notes']['0'].startswith('Моя нотатка <script>')
         with tempfile.TemporaryDirectory() as temp:
             path = Path(temp) / 'backup.json'
             backup['completed'] = [7, 63]
+            backup['notes'] = {'0': 'Імпортований висновок', '15': 'Фінальна нотатка'}
             path.write_text(json.dumps(backup))
             page.locator('#importFile').set_input_files(path)
             page.locator('#importButton').click()
             page.wait_for_function("document.getElementById('progressText').textContent==='3 із 64 кроків'")
+            assert 'Імпортований висновок' in json.loads(page.evaluate("localStorage.getItem('ai-atelier.progress.v1')"))['notes']['0']
+            assert 'Моя нотатка' in json.loads(page.evaluate("localStorage.getItem('ai-atelier.progress.v1')"))['notes']['0']
+            legacy = dict(backup)
+            legacy.pop('notes')
+            path.write_text(json.dumps(legacy))
+            page.locator('#importFile').set_input_files(path)
+            page.locator('#importButton').click()
+            page.wait_for_function("document.getElementById('backupStatus').textContent.includes('Відновлено')")
+            assert json.loads(page.evaluate("localStorage.getItem('ai-atelier.progress.v1')"))['notes']['15'] == 'Фінальна нотатка'
             backup['completed'] = [64]
             path.write_text(json.dumps(backup))
             page.locator('#importFile').set_input_files(path)
@@ -55,6 +70,7 @@ try:
         other.goto(url)
         other.locator('.module').first.click()
         other.locator('#tasks input').nth(1).check()
+        assert 'Імпортований висновок' in other.locator('#moduleNotes').input_value()
         page.wait_for_function("document.getElementById('progressText').textContent==='4 із 64 кроків'")
         page.locator('#courseNav').click()
         page.set_viewport_size({'width': 390, 'height': 844})
