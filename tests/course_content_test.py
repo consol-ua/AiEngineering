@@ -9,7 +9,7 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'tools'))
 import build_module1
-from course_content import CONTENT, load_module, module_source
+from course_content import CONTENT, load_course, module_source
 
 
 class CourseContentTests(unittest.TestCase):
@@ -17,12 +17,12 @@ class CourseContentTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             folder = root / 'content/course'
-            shutil.copytree(CONTENT / 'module-01', folder / 'module-01')
+            shutil.copytree(CONTENT, folder)
             (root / 'docs/chapters').mkdir(parents=True)
             shutil.copy(ROOT / 'docs/chapters/01.html', root / 'docs/chapters/01.html')
-            lesson = folder / 'module-01/07-lesson.md'
+            lesson = folder / '02-week.md'
             marker = 'Перевірка зміни окремого уроку <script>test</script>'
-            lesson.write_text(lesson.read_text() + '\n' + marker + '\n')
+            lesson.write_text(lesson.read_text().replace('## Урок 8.', marker + '\n\n## Урок 8.', 1))
             with patch.object(build_module1, 'ROOT', root):
                 build_module1.build(1, folder)
             html = (root / 'docs/chapters/01.html').read_text()
@@ -34,11 +34,11 @@ class CourseContentTests(unittest.TestCase):
     def test_incomplete_or_misnumbered_content_is_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            shutil.copytree(CONTENT / 'module-01', root / 'module-01')
-            lesson = root / 'module-01/05-lesson.md'
+            shutil.copytree(CONTENT, root, dirs_exist_ok=True)
+            lesson = root / '02-week.md'
             lesson.write_text(lesson.read_text().replace('## Урок 5.', '## Урок 6.', 1))
-            with self.assertRaisesRegex(ValueError, 'expected lesson 5'):
-                load_module(1, root)
+            with self.assertRaisesRegex(ValueError, 'expected lessons 5–8'):
+                load_course(root)
             lesson.unlink()
             with self.assertRaisesRegex(ValueError, 'expected 18 Markdown files'):
                 module_source(1, root)
