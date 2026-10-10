@@ -1,4 +1,4 @@
-"""Render supplied Modules 1–3 Markdown, preserving all 16 lessons and labs.
+"""Render supplied Modules 1–4 Markdown, preserving all 16 lessons and labs.
 Called by build_chapters.py after the shared reader shell is generated.
 """
 from pathlib import Path
@@ -52,9 +52,9 @@ def render(source):
 def build(module=1):
     module=int(module)
     first_week=(module-1)*4+1
-    module_name={1:"LLM Foundations & Prompt Engineering",2:"RAG Engineering, Vector Databases & AI Evaluations",3:"AI Agents, LangGraph, MCP & Context Engineering"}[module]
+    module_name={1:"LLM Foundations & Prompt Engineering",2:"RAG Engineering, Vector Databases & AI Evaluations",3:"AI Agents, LangGraph, MCP & Context Engineering",4:"Production AI Engineering, Security & Deployment"}[module]
     source=(ROOT/f'content/module{module}.md').read_text()
-    final=source.find(f'# Підсумковий проєкт модуля {module}')
+    final=source.find('# Фінальний проєкт усього курсу' if module==4 else f'# Підсумковий проєкт модуля {module}')
     if final<0:final=len(source)
     body=source[:final]
     lessons=list(re.finditer(r'^## Урок (\d+)\. (.+)$',body,re.M))
@@ -67,7 +67,7 @@ def build(module=1):
         part=body[match.start():lessons[n+1].start() if n+1<len(lessons) else len(body)]
         part=re.sub(r'^# Тиждень \d+\..*\n','',part,flags=re.M)
         chunks.append((f'Урок {n+1}. {match[2]}',part))
-    if final<len(source):chunks.append(('Підсумковий проєкт і Definition of Done',source[final:]))
+    if final<len(source):chunks.append(('Фінальний проєкт курсу і Definition of Done' if module==4 else 'Підсумковий проєкт і Definition of Done',source[final:]))
     page_count=len(chunks)
     path=ROOT/f'docs/chapters/{module:02}.html'
     old=path.read_text()
@@ -85,6 +85,8 @@ def build(module=1):
             extra=extra.replace('Схема LLM Gateway','Схема Production RAG').replace('FastAPI → Gateway → Ollama або Cloud → Validation','Query → Retrieval → Reranking → Grounded answer').replace('>FastAPI<','>Query<').replace('>Gateway<','>Retrieval<').replace('>Ollama / Cloud<','>Reranking<').replace('>Validation<','>Answer + Citations<')
         if n==9 and module==3:
             extra=extra.replace('Схема LLM Gateway','Схема Agentic RAG').replace('>FastAPI<','>Question<').replace('>Gateway<','>Agent + Policy<').replace('>Ollama / Cloud<','>Tools + Retrieval<').replace('>Validation<','>Evidence + Answer<').replace('FastAPI → Gateway → Ollama або Cloud → Validation','Question → Agent policy → Tools → Evidence')
+        if n==9 and module==4:
+            extra=extra.replace('Схема LLM Gateway','Схема Production AI').replace('>FastAPI<','>Auth + Limits<').replace('>Gateway<','>API + Agent<').replace('>Ollama / Cloud<','>External State<').replace('>Validation<','>Traces + Metrics<').replace('FastAPI → Gateway → Ollama або Cloud → Validation','Auth and limits → API and Agent → External state → Traces and metrics')
         pages.append(f'<section class="page" id="page-{n+1}"><div class="eyebrow">МОДУЛЬ {module}{week} · СТОРІНКА {n+1}/{page_count}</div>'+extra+render(part)+'</section>')
     start=old.index('<main>')+len('<main>');end=old.index('<div class="reader-controls">',start)
     old=old[:start]+''.join(pages)+old[end:]

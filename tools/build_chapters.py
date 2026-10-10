@@ -58,3 +58,5 @@ build_module1()
 build_module1(2)
 
 build_module1(3)
+
+build_module1(4)

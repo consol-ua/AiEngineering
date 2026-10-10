@@ -48,6 +48,20 @@ try:
     for sample in samples3:ast.parse(sample)
     assert len(re.findall(r'^## Урок ',module3,re.M))==16
     assert len(re.findall(r'^### Лабораторна робота',module3,re.M))==4
+    module4=(ROOT/'content/module4.md').read_text()
+    samples4=re.findall(r'```python\n(.*?)\n```',module4,re.S)
+    assert len(samples4)==2
+    for sample in samples4:ast.parse(sample)
+    assert len(re.findall(r'^## Урок ',module4,re.M))==16
+    assert len(re.findall(r'^### Лабораторна робота',module4,re.M))==4
+    import asyncio
+    namespace={}
+    exec(compile(samples4[0],'sse_example','exec'),namespace)
+    async def collect_tokens():
+        return [event async for event in namespace['generate_tokens']()]
+    events=asyncio.run(collect_tokens())
+    assert len(events)==4 and events[-1]=='event: done\ndata: {}\n\n'
+    assert json.loads(events[0].split('data: ')[1])=={'token':'Привіт'}
     for example in sorted((ROOT/'docs/examples').glob('*.py')):
         result=subprocess.run([sys.executable,str(example)],capture_output=True,text=True)
         assert result.returncode==0,(example,result.stderr)
@@ -62,7 +76,7 @@ try:
         counts=[]
         for i in range(16):
             page.goto(base+f'chapters/{i+1:02}.html')
-            expected=18 if i<3 else 12
+            expected=18 if i<4 else 12
             assert page.locator('.page').count()==expected
             assert page.locator('.page:visible').count()==1
             assert page.locator('nav a[data-page]').count()==expected
@@ -77,11 +91,22 @@ try:
             count=len(document.pages)
             assert 10<=count<=20,(i+1,count)
             extracted='\n'.join(p.extract_text() for p in document.pages)
-            assert 'Evaluation' in extracted and ('Best Practices' if i<3 else 'Best practices') in extracted
+            assert 'Evaluation' in extracted and 'best practices' in extracted.lower()
             counts.append(count)
             page.set_viewport_size({'width':390,'height':844})
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'),i+1
             page.set_viewport_size({'width':1280,'height':900})
+        page.goto(base+'chapters/04.html')
+        page.locator('#showAll').click()
+        for text in ['Cloud Run', 'Лабораторна робота №16', 'AI Knowledge Assistant', 'Урок 16.', '18 критеріїв']:
+            assert text in page.locator('main').inner_text(),text
+        assert page.locator('.formula').count()==4
+        page.locator('#chapterNotes').fill('Мої production нотатки')
+        page.locator('[data-step="0"]').check()
+        page.reload()
+        assert page.locator('#chapterNotes').input_value()=='Мої production нотатки'
+        assert page.locator('[data-step="0"]').is_checked()
+        page.locator('[data-step="0"]').uncheck()
         page.goto(base+'chapters/03.html')
         page.locator('#showAll').click()
         for text in ['LangGraph', 'MCP', 'Лабораторна робота №12', 'Agentic Knowledge Assistant', 'Урок 16.']:
@@ -125,6 +150,7 @@ try:
         data=json.loads(Path(event.value.path()).read_text())
         assert data['notes']['0']=='Оновлено з головної'
         assert data['completed']==[0]
+        assert data['notes']['3']=='Мої production нотатки'
         assert not errors,errors
         print('PASS: 16 readers, 32 example tests, navigation, mobile, shared progress/notes and export.')
         print('A4 PDF page counts:',counts)
