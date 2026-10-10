@@ -32,6 +32,12 @@ try:
     for sample in samples2:ast.parse(sample)
     assert len(re.findall(r'^## Урок ',module2,re.M))==16
     assert len(re.findall(r'^### Лабораторна робота',module2,re.M))==4
+    module3=(ROOT/'content/module3.md').read_text()
+    samples3=re.findall(r'```python\n(.*?)\n```',module3,re.S)
+    assert len(samples3)==5
+    for sample in samples3:ast.parse(sample)
+    assert len(re.findall(r'^## Урок ',module3,re.M))==9
+    assert len(re.findall(r'^### Лабораторна робота',module3,re.M))==2
     for example in sorted((ROOT/'docs/examples').glob('*.py')):
         result=subprocess.run([sys.executable,str(example)],capture_output=True,text=True)
         assert result.returncode==0,(example,result.stderr)
@@ -46,7 +52,7 @@ try:
         counts=[]
         for i in range(16):
             page.goto(base+f'chapters/{i+1:02}.html')
-            expected=18 if i<2 else 12
+            expected=10 if i==2 else 18 if i<2 else 12
             assert page.locator('.page').count()==expected
             assert page.locator('.page:visible').count()==1
             assert page.locator('nav a[data-page]').count()==expected
@@ -59,13 +65,22 @@ try:
             pdf=page.pdf(format='A4',prefer_css_page_size=True)
             document=PdfReader(io.BytesIO(pdf))
             count=len(document.pages)
-            assert 10<=count<=20,(i+1,count)
+            assert (1 if i==2 else 10)<=count<=20,(i+1,count)
             extracted='\n'.join(p.extract_text() for p in document.pages)
-            assert 'Evaluation' in extracted and ('Best Practices' if i<2 else 'Best practices') in extracted
+            assert 'Evaluation' in extracted and ('Best Practices' if i<3 else 'Best practices') in extracted
             counts.append(count)
             page.set_viewport_size({'width':390,'height':844})
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'),i+1
             page.set_viewport_size({'width':1280,'height':900})
+        page.goto(base+'chapters/03.html')
+        page.locator('#showAll').click()
+        for text in ['LangGraph', 'MCP', 'Лабораторна робота №10', 'файл обривається']:
+            assert text in page.locator('main').inner_text(),text
+        page.locator('#chapterNotes').fill('Мої нотатки до агентів')
+        page.locator('[data-step="0"]').check()
+        page.reload()
+        assert page.locator('#chapterNotes').input_value()=='Мої нотатки до агентів'
+        page.locator('[data-step="0"]').uncheck()
         page.goto(base+'chapters/02.html')
         page.locator('#showAll').click()
         for text in ['Qdrant', 'Лабораторна робота №8', 'Document RAG Assistant', '50 питань', 'Definition of Done']:

@@ -1,4 +1,4 @@
-"""Render supplied Module 1 or 2 Markdown, preserving all 16 lessons and labs.
+"""Render supplied Modules 1–3 Markdown, preserving all 16 lessons and labs.
 Called by build_chapters.py after the shared reader shell is generated.
 """
 from pathlib import Path
@@ -51,13 +51,14 @@ def render(source):
 
 def build(module=1):
     module=int(module)
-    first_week=1 if module==1 else 5
-    module_name="LLM Foundations & Prompt Engineering" if module==1 else "RAG Engineering, Vector Databases & AI Evaluations"
+    first_week=(module-1)*4+1
+    module_name={1:"LLM Foundations & Prompt Engineering",2:"RAG Engineering, Vector Databases & AI Evaluations",3:"AI Agents, LangGraph, MCP & Context Engineering"}[module]
     source=(ROOT/f'content/module{module}.md').read_text()
-    final=source.index(f'# Підсумковий проєкт модуля {module}')
+    final=source.find(f'# Підсумковий проєкт модуля {module}')
+    if final<0:final=len(source)
     body=source[:final]
     lessons=list(re.finditer(r'^## Урок (\d+)\. (.+)$',body,re.M))
-    assert len(lessons)==16
+    assert len(lessons)==(9 if module==3 else 16)
     intro=body[:lessons[0].start()]
     intro=re.sub(r'^# Тиждень \d+\..*\n','',intro,flags=re.M)
     chunks=[('Огляд · 4 тижні, 32 години',intro)]
@@ -66,11 +67,12 @@ def build(module=1):
         part=body[match.start():lessons[n+1].start() if n+1<len(lessons) else len(body)]
         part=re.sub(r'^# Тиждень \d+\..*\n','',part,flags=re.M)
         chunks.append((f'Урок {n+1}. {match[2]}',part))
-    chunks.append(('Підсумковий проєкт і Definition of Done',source[final:]))
+    if final<len(source):chunks.append(('Підсумковий проєкт і Definition of Done',source[final:]))
+    page_count=len(chunks)
     path=ROOT/f'docs/chapters/{module:02}.html'
     old=path.read_text()
     toc=''.join(f'<a href="#page-{n+1}" data-page="{n}">{n+1:02}. {html.escape(title)}</a>' for n,(title,_) in enumerate(chunks))
-    old=re.sub(r'<details open>.*?</details>','<details open><summary>Зміст · 18 сторінок</summary>'+toc+'</details>',old,count=1,flags=re.S)
+    old=re.sub(r'<details open>.*?</details>',f'<details open><summary>Зміст · {page_count} сторінок</summary>'+toc+'</details>',old,count=1,flags=re.S)
     pages=[]
     for n,(title,part) in enumerate(chunks):
         week=f' · ТИЖДЕНЬ {(n-1)//4+first_week}' if 1<=n<=16 else ''
@@ -81,13 +83,17 @@ def build(module=1):
             extra='<h3>Схема LLM Gateway</h3><svg viewBox="0 0 720 120" role="img" aria-label="FastAPI → Gateway → Ollama або Cloud → Validation"><rect x="5" y="25" width="150" height="65" rx="10" fill="#dfe9d6"/><text x="80" y="64" text-anchor="middle">FastAPI</text><text x="162" y="64">→</text><rect x="185" y="25" width="150" height="65" rx="10" fill="#dfe9d6"/><text x="260" y="64" text-anchor="middle">Gateway</text><text x="342" y="64">→</text><rect x="365" y="25" width="150" height="65" rx="10" fill="#dfe9d6"/><text x="440" y="64" text-anchor="middle">Ollama / Cloud</text><text x="522" y="64">→</text><rect x="545" y="25" width="170" height="65" rx="10" fill="#dfe9d6"/><text x="630" y="64" text-anchor="middle">Validation</text></svg>'
         if n==9 and module==2:
             extra=extra.replace('Схема LLM Gateway','Схема Production RAG').replace('FastAPI → Gateway → Ollama або Cloud → Validation','Query → Retrieval → Reranking → Grounded answer').replace('>FastAPI<','>Query<').replace('>Gateway<','>Retrieval<').replace('>Ollama / Cloud<','>Reranking<').replace('>Validation<','>Answer + Citations<')
-        pages.append(f'<section class="page" id="page-{n+1}"><div class="eyebrow">МОДУЛЬ {module}{week} · СТОРІНКА {n+1}/18</div>'+extra+render(part)+'</section>')
+        if module==3 and n in (0,9):
+            extra+='<div class="callout">Частковий матеріал: файл обривається в уроці 9. Продовження та уроки 10–16 ще не надані.</div>'
+        if n==9 and module==3:
+            extra=extra.replace('Схема LLM Gateway','Схема Agentic RAG').replace('>FastAPI<','>Question<').replace('>Gateway<','>Agent + Policy<').replace('>Ollama / Cloud<','>Tools + Retrieval<').replace('>Validation<','>Evidence + Answer<').replace('FastAPI → Gateway → Ollama або Cloud → Validation','Question → Agent policy → Tools → Evidence')
+        pages.append(f'<section class="page" id="page-{n+1}"><div class="eyebrow">МОДУЛЬ {module}{week} · СТОРІНКА {n+1}/{page_count}</div>'+extra+render(part)+'</section>')
     start=old.index('<main>')+len('<main>');end=old.index('<div class="reader-controls">',start)
     old=old[:start]+''.join(pages)+old[end:]
     old=re.sub(r'<title>.*?</title>','<title>'+html.escape(module_name)+' — AI Atelier</title>',old,count=1)
     old=old.replace(f'data-module="{module-1}"',f'data-module="{module-1}" data-extended="true"')
     path.write_text(old)
     (ROOT/f'docs/module{module}.md').write_text(source)
-    print(f'Updated Module {module}: 16 lessons, 4 labs, final project, 18 reader pages.')
+    print(f'Updated Module {module}: {len(lessons)} lessons, {page_count} reader pages.')
 
 if __name__=='__main__':build()
