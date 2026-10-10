@@ -58,7 +58,7 @@ def build(module=1):
     if final<0:final=len(source)
     body=source[:final]
     lessons=list(re.finditer(r'^## Урок (\d+)\. (.+)$',body,re.M))
-    assert len(lessons)==(9 if module==3 else 16)
+    assert len(lessons)==16
     intro=body[:lessons[0].start()]
     intro=re.sub(r'^# Тиждень \d+\..*\n','',intro,flags=re.M)
     chunks=[('Огляд · 4 тижні, 32 години',intro)]
@@ -83,8 +83,6 @@ def build(module=1):
             extra='<h3>Схема LLM Gateway</h3><svg viewBox="0 0 720 120" role="img" aria-label="FastAPI → Gateway → Ollama або Cloud → Validation"><rect x="5" y="25" width="150" height="65" rx="10" fill="#dfe9d6"/><text x="80" y="64" text-anchor="middle">FastAPI</text><text x="162" y="64">→</text><rect x="185" y="25" width="150" height="65" rx="10" fill="#dfe9d6"/><text x="260" y="64" text-anchor="middle">Gateway</text><text x="342" y="64">→</text><rect x="365" y="25" width="150" height="65" rx="10" fill="#dfe9d6"/><text x="440" y="64" text-anchor="middle">Ollama / Cloud</text><text x="522" y="64">→</text><rect x="545" y="25" width="170" height="65" rx="10" fill="#dfe9d6"/><text x="630" y="64" text-anchor="middle">Validation</text></svg>'
         if n==9 and module==2:
             extra=extra.replace('Схема LLM Gateway','Схема Production RAG').replace('FastAPI → Gateway → Ollama або Cloud → Validation','Query → Retrieval → Reranking → Grounded answer').replace('>FastAPI<','>Query<').replace('>Gateway<','>Retrieval<').replace('>Ollama / Cloud<','>Reranking<').replace('>Validation<','>Answer + Citations<')
-        if module==3 and n in (0,9):
-            extra+='<div class="callout">Частковий матеріал: файл обривається в уроці 9. Продовження та уроки 10–16 ще не надані.</div>'
         if n==9 and module==3:
             extra=extra.replace('Схема LLM Gateway','Схема Agentic RAG').replace('>FastAPI<','>Question<').replace('>Gateway<','>Agent + Policy<').replace('>Ollama / Cloud<','>Tools + Retrieval<').replace('>Validation<','>Evidence + Answer<').replace('FastAPI → Gateway → Ollama або Cloud → Validation','Question → Agent policy → Tools → Evidence')
         pages.append(f'<section class="page" id="page-{n+1}"><div class="eyebrow">МОДУЛЬ {module}{week} · СТОРІНКА {n+1}/{page_count}</div>'+extra+render(part)+'</section>')

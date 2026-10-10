@@ -34,10 +34,20 @@ try:
     assert len(re.findall(r'^### Лабораторна робота',module2,re.M))==4
     module3=(ROOT/'content/module3.md').read_text()
     samples3=re.findall(r'```python\n(.*?)\n```',module3,re.S)
-    assert len(samples3)==5
+    assert len(samples3)==8
+    window_source=next(sample for sample in samples3 if sample.startswith('def get_recent_messages'))
+    namespace={}
+    exec(compile(window_source,'window_example','exec'),namespace)
+    assert namespace['get_recent_messages']([{'n':1},{'n':2}],1)==[{'n':2}]
+    try:
+        namespace['get_recent_messages']([{'n':1}],0)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError('Zero memory window must be rejected')
     for sample in samples3:ast.parse(sample)
-    assert len(re.findall(r'^## Урок ',module3,re.M))==9
-    assert len(re.findall(r'^### Лабораторна робота',module3,re.M))==2
+    assert len(re.findall(r'^## Урок ',module3,re.M))==16
+    assert len(re.findall(r'^### Лабораторна робота',module3,re.M))==4
     for example in sorted((ROOT/'docs/examples').glob('*.py')):
         result=subprocess.run([sys.executable,str(example)],capture_output=True,text=True)
         assert result.returncode==0,(example,result.stderr)
@@ -52,7 +62,7 @@ try:
         counts=[]
         for i in range(16):
             page.goto(base+f'chapters/{i+1:02}.html')
-            expected=10 if i==2 else 18 if i<2 else 12
+            expected=18 if i<3 else 12
             assert page.locator('.page').count()==expected
             assert page.locator('.page:visible').count()==1
             assert page.locator('nav a[data-page]').count()==expected
@@ -65,7 +75,7 @@ try:
             pdf=page.pdf(format='A4',prefer_css_page_size=True)
             document=PdfReader(io.BytesIO(pdf))
             count=len(document.pages)
-            assert (1 if i==2 else 10)<=count<=20,(i+1,count)
+            assert 10<=count<=20,(i+1,count)
             extracted='\n'.join(p.extract_text() for p in document.pages)
             assert 'Evaluation' in extracted and ('Best Practices' if i<3 else 'Best practices') in extracted
             counts.append(count)
@@ -74,7 +84,7 @@ try:
             page.set_viewport_size({'width':1280,'height':900})
         page.goto(base+'chapters/03.html')
         page.locator('#showAll').click()
-        for text in ['LangGraph', 'MCP', 'Лабораторна робота №10', 'файл обривається']:
+        for text in ['LangGraph', 'MCP', 'Лабораторна робота №12', 'Agentic Knowledge Assistant', 'Урок 16.']:
             assert text in page.locator('main').inner_text(),text
         page.locator('#chapterNotes').fill('Мої нотатки до агентів')
         page.locator('[data-step="0"]').check()
