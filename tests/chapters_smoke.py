@@ -14,25 +14,27 @@ from playwright.sync_api import sync_playwright
 from pypdf import PdfReader
 
 ROOT=Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT/'tools'))
+from course_content import module_source as read_module_source
 class Quiet(SimpleHTTPRequestHandler):
     def log_message(self,*args):pass
 server=ThreadingHTTPServer(('127.0.0.1',0),functools.partial(Quiet,directory=str(ROOT)))
 threading.Thread(target=server.serve_forever,daemon=True).start()
 base=f'http://127.0.0.1:{server.server_port}/docs/'
 try:
-    module_source=(ROOT/'content/module1.md').read_text()
+    module_source=read_module_source(1)
     samples=re.findall(r'```python\n(.*?)\n```',module_source,re.S)
     assert len(samples)==5
     for sample in samples:ast.parse(sample)
     assert len(re.findall(r'^## Урок ',module_source,re.M))==16
     assert len(re.findall(r'^### Лабораторна робота',module_source,re.M))==4
-    module2=(ROOT/'content/module2.md').read_text()
+    module2=read_module_source(2)
     samples2=re.findall(r'```python\n(.*?)\n```',module2,re.S)
     assert len(samples2)==12
     for sample in samples2:ast.parse(sample)
     assert len(re.findall(r'^## Урок ',module2,re.M))==16
     assert len(re.findall(r'^### Лабораторна робота',module2,re.M))==4
-    module3=(ROOT/'content/module3.md').read_text()
+    module3=read_module_source(3)
     samples3=re.findall(r'```python\n(.*?)\n```',module3,re.S)
     assert len(samples3)==8
     window_source=next(sample for sample in samples3 if sample.startswith('def get_recent_messages'))
@@ -48,7 +50,7 @@ try:
     for sample in samples3:ast.parse(sample)
     assert len(re.findall(r'^## Урок ',module3,re.M))==16
     assert len(re.findall(r'^### Лабораторна робота',module3,re.M))==4
-    module4=(ROOT/'content/module4.md').read_text()
+    module4=read_module_source(4)
     samples4=re.findall(r'```python\n(.*?)\n```',module4,re.S)
     assert len(samples4)==2
     for sample in samples4:ast.parse(sample)

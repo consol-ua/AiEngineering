@@ -4,6 +4,7 @@ Called by build_chapters.py after the shared reader shell is generated.
 from pathlib import Path
 import html
 import re
+from course_content import CONTENT, module_source, reader_chunks
 
 ROOT=Path(__file__).resolve().parents[1]
 
@@ -49,25 +50,12 @@ def render(source):
         out.append('<p>'+inline(' '.join(paragraph))+'</p>')
     return ''.join(out)
 
-def build(module=1):
+def build(module=1, content_root=CONTENT):
     module=int(module)
     first_week=(module-1)*4+1
     module_name={1:"LLM Foundations & Prompt Engineering",2:"RAG Engineering, Vector Databases & AI Evaluations",3:"AI Agents, LangGraph, MCP & Context Engineering",4:"Production AI Engineering, Security & Deployment"}[module]
-    source=(ROOT/f'content/module{module}.md').read_text()
-    final=source.find('# Фінальний проєкт усього курсу' if module==4 else f'# Підсумковий проєкт модуля {module}')
-    if final<0:final=len(source)
-    body=source[:final]
-    lessons=list(re.finditer(r'^## Урок (\d+)\. (.+)$',body,re.M))
-    assert len(lessons)==16
-    intro=body[:lessons[0].start()]
-    intro=re.sub(r'^# Тиждень \d+\..*\n','',intro,flags=re.M)
-    chunks=[('Огляд · 4 тижні, 32 години',intro)]
-    weeks=[]
-    for n,match in enumerate(lessons):
-        part=body[match.start():lessons[n+1].start() if n+1<len(lessons) else len(body)]
-        part=re.sub(r'^# Тиждень \d+\..*\n','',part,flags=re.M)
-        chunks.append((f'Урок {n+1}. {match[2]}',part))
-    if final<len(source):chunks.append(('Фінальний проєкт курсу і Definition of Done' if module==4 else 'Підсумковий проєкт і Definition of Done',source[final:]))
+    source=module_source(module, content_root)
+    chunks=reader_chunks(module, content_root)
     page_count=len(chunks)
     path=ROOT/f'docs/chapters/{module:02}.html'
     old=path.read_text()
@@ -91,9 +79,10 @@ def build(module=1):
     start=old.index('<main>')+len('<main>');end=old.index('<div class="reader-controls">',start)
     old=old[:start]+''.join(pages)+old[end:]
     old=re.sub(r'<title>.*?</title>','<title>'+html.escape(module_name)+' — AI Atelier</title>',old,count=1)
-    old=old.replace(f'data-module="{module-1}"',f'data-module="{module-1}" data-extended="true"')
+    if 'data-extended="true"' not in old:
+        old=old.replace(f'data-module="{module-1}"',f'data-module="{module-1}" data-extended="true"')
     path.write_text(old)
     (ROOT/f'docs/module{module}.md').write_text(source)
-    print(f'Updated Module {module}: {len(lessons)} lessons, {page_count} reader pages.')
+    print(f'Updated Module {module}: 16 lessons, {page_count} reader pages.')
 
 if __name__=='__main__':build()

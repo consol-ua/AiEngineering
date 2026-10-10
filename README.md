@@ -25,9 +25,18 @@
 
 ### Редагування матеріалів
 
-Перший модуль оновлено за наданим користувачем посібником **LLM Foundations & Prompt Engineering**: 4 тижні, 32 години, 16 уроків, 4 лабораторні, LLM Gateway + Document Classification і 12 критеріїв Definition of Done. Джерело: `content/module1.md`; копія для завантаження: `docs/module1.md`. Виправлено втрачені переноси в Python-коді, формули подано Unicode, тимчасові thumbnails images.openai.com прибрано зі збереженням прямих відеопосилань. Решта 13 розділів залишаються попередніми навчальними темами; часовий план усього курсу не переорганізовано під чотиритижневий перший модуль.
+Контент модулів 1–4 редагуйте в `content/course/module-01/` … `module-04/`. Кожна папка містить рівно 18 файлів:
 
-Другий модуль оновлено за вашим посібником **RAG Engineering, Vector Databases & AI Evaluations**: тижні 5–8, 32 години, 16 уроків, лабораторні №5–8, Document RAG Assistant і 14 критеріїв завершення. Джерело: `content/module2.md`; файл для завантаження: `docs/module2.md`. Відновлено форматування 12 Python-прикладів і 11 формул; обірваний `client.upsert(points=[` доповнено мінімальним навчальним списком PointStruct і позначено коментарем. Python-блоки перевіряються на синтаксис; їхні live-інтеграції не виконуються smoke-тестом. Для практики знадобляться PyMuPDF, python-docx, langchain-text-splitters, sentence-transformers, NumPy, Pydantic, qdrant-client та Qdrant/Docker. Новий модуль зберігає попередні module ID, notes та 4 progress steps. У Chromium перевірено 20 A4-сторінок для модуля 2 (поля 14 mm, 10 pt); модуль 1 має 19 A4-сторінок.
+- `00-intro.md` — вступ і програма модуля.
+- `01-lesson.md` … `16-lesson.md` — окремі уроки; лабораторні й джерела збережено біля відповідного уроку.
+- `17-summary.md` — підсумковий проєкт і критерії готовності.
+
+Після редагування запустіть `python tools/build_chapters.py`: розділи сайту, чотири файли модулів для завантаження й повний посібник автоматично збираються з цих файлів. Markdown у `docs/` і HTML є результатами збірки. Прогрес та нотатки використовують наявні ідентифікатори.
+
+
+Перший модуль оновлено за наданим користувачем посібником **LLM Foundations & Prompt Engineering**: 4 тижні, 32 години, 16 уроків, 4 лабораторні, LLM Gateway + Document Classification і 12 критеріїв Definition of Done. Джерело: `content/course/module-01/`; копія для завантаження: `docs/module1.md`. Виправлено втрачені переноси в Python-коді, формули подано Unicode, тимчасові thumbnails images.openai.com прибрано зі збереженням прямих відеопосилань. Решта 13 розділів залишаються попередніми навчальними темами; часовий план усього курсу не переорганізовано під чотиритижневий перший модуль.
+
+Другий модуль оновлено за вашим посібником **RAG Engineering, Vector Databases & AI Evaluations**: тижні 5–8, 32 години, 16 уроків, лабораторні №5–8, Document RAG Assistant і 14 критеріїв завершення. Джерело: `content/course/module-02/`; файл для завантаження: `docs/module2.md`. Відновлено форматування 12 Python-прикладів і 11 формул; обірваний `client.upsert(points=[` доповнено мінімальним навчальним списком PointStruct і позначено коментарем. Python-блоки перевіряються на синтаксис; їхні live-інтеграції не виконуються smoke-тестом. Для практики знадобляться PyMuPDF, python-docx, langchain-text-splitters, sentence-transformers, NumPy, Pydantic, qdrant-client та Qdrant/Docker. Новий модуль зберігає попередні module ID, notes та 4 progress steps. У Chromium перевірено 20 A4-сторінок для модуля 2 (поля 14 mm, 10 pt); модуль 1 має 19 A4-сторінок.
 
 Авторський текст решти розділів: `content/chapters.py`. Виконуваний код: `docs/examples/*.py`. Після змін перегенеруйте HTML і ZIP:
 
@@ -43,6 +52,7 @@ python -m playwright install chromium
 python tests/chapters_smoke.py
 # Для системного Chromium:
 CHROMIUM_PATH=/usr/bin/chromium python tests/chapters_smoke.py
+python tests/course_content_test.py
 ```
 
 ## Прогрес та резервні копії
@@ -114,12 +124,12 @@ python -m venv .venv
 
 Модуль **AI Agents, LangGraph, MCP & Context Engineering** (тижні 9–12) об’єднує два надані файли. Уроки 1–8 та лабораторні №9–10 збережені без змін; додано уроки 10–16, лабораторні №11–12, Agentic Knowledge Assistant та 15 критеріїв Definition of Done. Урок 9 залишено в обсязі першого файлу: другий файл починається з уроку 10 і не містить доповнення до нього. Примітку про це збережено біля уроку 9.
 
-Reader містить 18 навчальних сторінок; у Chromium перевірено 20 A4-сторінок (поля 12 mm, 9.5 pt). Кількість при інших налаштуваннях друку може відрізнятися. Джерело: `content/module3.md`; завантаження: `docs/module3.md`. Відновлено форматування восьми Python-блоків. У sliding-window приклад додано відхилення max_messages≤0, щоб зріз [-0:] не повертав усю історію. Синтаксис перевірено; live-запуск LangGraph/MCP/Qdrant та PostgreSQL-backed persistence студент виконує окремо в лабораторних. Наявні browser notes і progress IDs незмінні.
+Reader містить 18 навчальних сторінок; у Chromium перевірено 20 A4-сторінок (поля 12 mm, 9.5 pt). Кількість при інших налаштуваннях друку може відрізнятися. Джерело: `content/course/module-03/`; завантаження: `docs/module3.md`. Відновлено форматування восьми Python-блоків. У sliding-window приклад додано відхилення max_messages≤0, щоб зріз [-0:] не повертав усю історію. Синтаксис перевірено; live-запуск LangGraph/MCP/Qdrant та PostgreSQL-backed persistence студент виконує окремо в лабораторних. Наявні browser notes і progress IDs незмінні.
 
 ### Модуль 4: Production AI Engineering, Security & Deployment
 
-Додано повний наданий матеріал: 16 уроків (тижні 13–16), лабораторні №13–16 і фінальний AI Knowledge Assistant — Production Edition із 18 критеріями готовності. Reader містить 18 навчальних сторінок, чотири формули та схему production pipeline. У Chromium перевірено 19 сторінок PDF A4 (поля 14 mm, шрифт 10 pt); результат за інших налаштувань друку може відрізнятися. Джерело: `content/module4.md`; завантаження: `docs/module4.md`.
+Додано повний наданий матеріал: 16 уроків (тижні 13–16), лабораторні №13–16 і фінальний AI Knowledge Assistant — Production Edition із 18 критеріями готовності. Reader містить 18 навчальних сторінок, чотири формули та схему production pipeline. У Chromium перевірено 19 сторінок PDF A4 (поля 14 mm, шрифт 10 pt); результат за інших налаштувань друку може відрізнятися. Джерело: `content/course/module-04/`; завантаження: `docs/module4.md`.
 
 Відновлено форматування SSE та Qdrant tenant-filter прикладів. Обидва перевірено на синтаксис; SSE події додатково перевірено локально. Docker, GitHub Actions і Cloud Run команди наведено як навчальний матеріал: реальний deployment та зовнішні інтеграції не запускалися. Прогрес і нотатки модуля 4 зберігають наявні ідентифікатори та експортуються в спільній резервній копії.
 
-Повний контент усіх чотирьох наданих модулів об’єднано в `docs/ai-engineering-full-course.md`. Файл автоматично збирається командою `python tools/build_chapters.py` зі джерел `content/module1.md`–`content/module4.md` і доступний для завантаження на головній сторінці.
+Повний контент усіх чотирьох наданих модулів об’єднано в `docs/ai-engineering-full-course.md`. Файл автоматично збирається командою `python tools/build_chapters.py` з окремих файлів у `content/course/` і доступний для завантаження на головній сторінці.

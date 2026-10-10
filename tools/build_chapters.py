@@ -52,6 +52,7 @@ with zipfile.ZipFile(ROOT/'docs/examples/all-examples.zip','w',zipfile.ZIP_DEFLA
     for path in sorted((ROOT/'docs/examples').glob('*.py')):archive.write(path,path.name)
 print('Built 16 chapters × 12 reading pages and example archive.')
 
+from course_content import module_source
 from build_module1 import build as build_module1
 build_module1()
 
@@ -62,7 +63,7 @@ build_module1(3)
 build_module1(4)
 
 # Single downloadable handbook, assembled without changing module content.
-modules=[(ROOT/f'content/module{number}.md').read_text().rstrip() for number in range(1,5)]
+modules=[module_source(number).rstrip() for number in range(1,5)]
 handbook='# AI Engineering — повний посібник\n\nУсі 4 модулі · 16 тижнів · 64 уроки · 16 лабораторних робіт.\n\n'+ '\n\n---\n\n'.join(modules)+'\n'
 (ROOT/'docs/ai-engineering-full-course.md').write_text(handbook)
 print('Built complete four-module handbook.')
