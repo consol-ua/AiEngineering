@@ -54,3 +54,5 @@ print('Built 16 chapters × 12 reading pages and example archive.')
 
 from build_module1 import build as build_module1
 build_module1()
+
+build_module1(2)

@@ -26,6 +26,12 @@ try:
     for sample in samples:ast.parse(sample)
     assert len(re.findall(r'^## Урок ',module_source,re.M))==16
     assert len(re.findall(r'^### Лабораторна робота',module_source,re.M))==4
+    module2=(ROOT/'content/module2.md').read_text()
+    samples2=re.findall(r'```python\n(.*?)\n```',module2,re.S)
+    assert len(samples2)==12
+    for sample in samples2:ast.parse(sample)
+    assert len(re.findall(r'^## Урок ',module2,re.M))==16
+    assert len(re.findall(r'^### Лабораторна робота',module2,re.M))==4
     for example in sorted((ROOT/'docs/examples').glob('*.py')):
         result=subprocess.run([sys.executable,str(example)],capture_output=True,text=True)
         assert result.returncode==0,(example,result.stderr)
@@ -40,7 +46,7 @@ try:
         counts=[]
         for i in range(16):
             page.goto(base+f'chapters/{i+1:02}.html')
-            expected=18 if i==0 else 12
+            expected=18 if i<2 else 12
             assert page.locator('.page').count()==expected
             assert page.locator('.page:visible').count()==1
             assert page.locator('nav a[data-page]').count()==expected
@@ -55,11 +61,21 @@ try:
             count=len(document.pages)
             assert 10<=count<=20,(i+1,count)
             extracted='\n'.join(p.extract_text() for p in document.pages)
-            assert 'Evaluation' in extracted and ('Best Practices' if i==0 else 'Best practices') in extracted
+            assert 'Evaluation' in extracted and ('Best Practices' if i<2 else 'Best practices') in extracted
             counts.append(count)
             page.set_viewport_size({'width':390,'height':844})
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'),i+1
             page.set_viewport_size({'width':1280,'height':900})
+        page.goto(base+'chapters/02.html')
+        page.locator('#showAll').click()
+        for text in ['Qdrant', 'Лабораторна робота №8', 'Document RAG Assistant', '50 питань', 'Definition of Done']:
+            assert text in page.locator('main').inner_text(),text
+        assert page.locator('.formula').count()==11
+        page.locator('#chapterNotes').fill('Мої нотатки RAG')
+        page.locator('[data-step="0"]').check()
+        page.reload()
+        assert page.locator('#chapterNotes').input_value()=='Мої нотатки RAG'
+        page.locator('[data-step="0"]').uncheck()
         page.goto(base+'chapters/01.html')
         page.locator('#showAll').click()
         for text in ['Урок 16.', 'Лабораторна робота №4', 'LLM Gateway', '32 години', '90% schema-valid']:
