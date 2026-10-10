@@ -12,6 +12,8 @@ from playwright.sync_api import sync_playwright
 from pypdf import PdfReader
 
 ROOT=Path(__file__).resolve().parents[1]
+sys.path.insert(0,str(ROOT))
+from content.chapters import CHAPTERS
 class Quiet(SimpleHTTPRequestHandler):
     def log_message(self,*args):pass
 server=ThreadingHTTPServer(('127.0.0.1',0),functools.partial(Quiet,directory=str(ROOT)))
@@ -21,6 +23,10 @@ try:
     for example in sorted((ROOT/'docs/examples').glob('*.py')):
         result=subprocess.run([sys.executable,str(example)],capture_output=True,text=True)
         assert result.returncode==0,(example,result.stderr)
+    for number,chapter in enumerate(CHAPTERS,1):
+        result=subprocess.run([sys.executable,'-c',chapter['demo']],cwd=ROOT/'docs/examples',capture_output=True,text=True)
+        assert result.returncode==0,(number,result.stderr)
+        assert result.stdout.strip()==chapter['expected'].strip(),(number,result.stdout)
     with sync_playwright() as p:
         opts={'headless':True}
         if os.getenv('CHROMIUM_PATH'):opts['executable_path']=os.environ['CHROMIUM_PATH']
@@ -39,6 +45,8 @@ try:
             assert page.locator('#page-2').is_visible()
             page.locator('#showAll').click()
             assert page.locator('.page:visible').count()==12
+            assert CHAPTERS[i]['expected'] in page.locator('#page-8').inner_text()
+            assert page.locator('#page-10 ol li').count()==len(CHAPTERS[i]['lab_steps'])
             page.locator('#showAll').click()
             # Print mode must include all pages, even when reader shows only one.
             pdf=page.pdf(format='A4',prefer_css_page_size=True)
@@ -46,7 +54,7 @@ try:
             count=len(document.pages)
             assert 10<=count<=20,(i+1,count)
             extracted='\n'.join(p.extract_text() for p in document.pages)
-            assert 'Evaluation' in extracted and 'Best practices' in extracted
+            assert 'Як перевірити свою роботу' in extracted and 'Корисні звички' in extracted
             counts.append(count)
             page.set_viewport_size({'width':390,'height':844})
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'),i+1
@@ -71,7 +79,7 @@ try:
         assert data['notes']['0']=='Оновлено з головної'
         assert data['completed']==[0]
         assert not errors,errors
-        print('PASS: 16 readers, 32 example tests, navigation, mobile, shared progress/notes and export.')
+        print('PASS: 16 readers, example tests and 16 guided demos, navigation, mobile, shared progress/notes and export.')
         print('A4 PDF page counts:',counts)
         context.close();browser.close()
 finally:
